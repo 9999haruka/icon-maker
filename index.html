@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>アイコン名札メーカー</title>
+<title>アイコンメーカー</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Shippori+Mincho:wght@400;600;700&display=swap" rel="stylesheet">
@@ -226,7 +226,7 @@
 <body>
 <div class="app">
   <header>
-    <h1>アイコン名札メーカー</h1>
+    <h1>アイコンメーカー</h1>
     <p>X(Twitter)のアイコンや好きな画像を丸くくり抜いて、名前入りの素材を作れます。データはすべてこのパソコンの中だけで処理され、外部には送信されません。</p>
   </header>
 
@@ -334,6 +334,9 @@
           <div class="row">
             <input type="color" id="strokeColor" value="#000000">
             <input type="text" class="hex-input" id="strokeColorHex" value="#000000" maxlength="7" placeholder="#RRGGBB">
+          </div>
+          <div class="row">
+            <div class="swatches" id="strokeSwatches"></div>
           </div>
         </div>
 
@@ -460,6 +463,7 @@
   const strokeWidthRange = $("strokeWidthRange"), strokeWidthVal = $("strokeWidthVal");
   const strokeColorEl = $("strokeColor");
   const strokeColorHexEl = $("strokeColorHex");
+  const strokeSwatches = $("strokeSwatches");
   const textOffsetXRange = $("textOffsetXRange"), textOffsetXVal = $("textOffsetXVal");
   const textOffsetYRange = $("textOffsetYRange"), textOffsetYVal = $("textOffsetYVal");
   const textOffsetXReset = $("textOffsetXReset"), textOffsetYReset = $("textOffsetYReset");
@@ -710,6 +714,13 @@
     highlightSwatch(textSwatches, hex);
     draw();
   });
+  buildSwatches(strokeSwatches, (hex) => {
+    strokeColorEl.value = hex;
+    strokeColorHexEl.value = hex;
+    state.strokeColor = hex;
+    highlightSwatch(strokeSwatches, hex);
+    draw();
+  });
 
   // カラーコード（HEX）直接入力欄。type="color"のネイティブUIがRGBタブ表示に
   // なる環境でも、#RRGGBBの直接入力・貼り付けができるようにする。
@@ -738,6 +749,7 @@
   });
   bindHexInput(strokeColorHexEl, strokeColorEl, (v) => {
     state.strokeColor = v;
+    highlightSwatch(strokeSwatches, v);
     draw();
   });
 
@@ -762,6 +774,7 @@
   strokeColorEl.addEventListener("input", () => {
     state.strokeColor = strokeColorEl.value;
     strokeColorHexEl.value = strokeColorEl.value;
+    highlightSwatch(strokeSwatches, state.strokeColor);
     draw();
   });
 
