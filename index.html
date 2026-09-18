@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アイコン名札メーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Shippori+Mincho:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14161c;
+    --panel: #1d2029;
+    --panel-2: #262a36;
+    --border: #333849;
+    --accent: #4f9dff;
+    --accent-2: #ff6fa5;
+    --text: #eef0f5;
+    --text-dim: #9aa1b4;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Meiryo", "Yu Gothic", "Noto Sans JP", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 1280px; margin: 0 auto; padding: 20px 16px 60px; }
+  header { padding: 8px 4px 20px; }
+  header h1 { font-size: 20px; margin: 0 0 4px; }
+  header p { margin: 0; color: var(--text-dim); font-size: 13px; }
+
+  main {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .panel {
+    flex: 1 1 380px;
+    min-width: 320px;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .preview {
+    flex: 1 1 420px;
+    min-width: 320px;
+    position: sticky;
+    top: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .card h2 {
+    font-size: 13px;
+    margin: 0 0 10px;
+    color: var(--text-dim);
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .row:last-child { margin-bottom: 0; }
+  .row.wrap { flex-wrap: wrap; }
+  label.field-label {
+    font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 4px;
+  }
+
+  /* タブ */
+  .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tab-btn {
+    flex: 1;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: .15s;
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  input[type="text"]:focus, input[type="number"]:focus { outline: 1px solid var(--accent); }
+
+  input[type="range"] { flex: 1; accent-color: var(--accent); }
+  .range-val { width: 46px; text-align: right; font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
+
+  select {
+    flex: 1;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    transition: .15s;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.small { padding: 6px 10px; font-size: 12px; white-space: nowrap; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider-toggle {
+    position: absolute; inset: 0; background: var(--border); border-radius: 22px;
+    cursor: pointer; transition: .2s;
+  }
+  .slider-toggle::before {
+    content: ""; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: .2s;
+  }
+  .switch input:checked + .slider-toggle { background: var(--accent); }
+  .switch input:checked + .slider-toggle::before { transform: translateX(18px); }
+
+  /* ドロップゾーン */
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 22px 12px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    transition: .15s;
+  }
+  .dropzone.drag { border-color: var(--accent); background: rgba(79,157,255,.08); color: var(--text); }
+  .dropzone input { display: none; }
+
+  /* カラーボタン */
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .swatch {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid var(--border); cursor: pointer; padding: 0;
+  }
+  .swatch.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  input[type="color"] {
+    width: 36px; height: 32px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--panel-2); padding: 2px; cursor: pointer;
+    flex-shrink: 0;
+  }
+  .hex-input {
+    width: 92px !important;
+    flex: none !important;
+    font-family: monospace;
+    text-transform: lowercase;
+  }
+
+  /* プレビュー */
+  .canvas-wrap {
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 20px;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%;
+    max-width: 480px;
+    min-height: 320px;
+  }
+  .checkerboard {
+    background-image:
+      linear-gradient(45deg, #4a4a4a 25%, transparent 25%),
+      linear-gradient(-45deg, #4a4a4a 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #4a4a4a 75%),
+      linear-gradient(-45deg, transparent 75%, #4a4a4a 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    background-color: #6b6b6b;
+  }
+  #canvas { max-width: 100%; height: auto; display: block; }
+
+  .actions { display: flex; gap: 10px; width: 100%; max-width: 480px; }
+  .actions .btn { flex: 1; padding: 12px; font-size: 14px; font-weight: 600; }
+  .actions .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .actions .btn.secondary { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
+
+  #status { font-size: 12.5px; color: var(--text-dim); min-height: 18px; text-align: center; }
+  #status.error { color: #ff6b6b; }
+  #status.ok { color: #6bff9e; }
+
+  @media (max-width: 860px) {
+    .preview { position: static; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>アイコン名札メーカー</h1>
+    <p>X(Twitter)のアイコンや好きな画像を丸くくり抜いて、名前入りの素材を作れます。データはすべてこのパソコンの中だけで処理され、外部には送信されません。</p>
+  </header>
+
+  <main>
+    <section class="panel">
+
+      <!-- 画像ソース -->
+      <div class="card">
+        <h2>① 元になる画像を用意する</h2>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="twitter">X(Twitter)アイコンを取得</button>
+          <button class="tab-btn" data-tab="upload">画像をアップロード</button>
+        </div>
+
+        <div class="tab-pane active" id="pane-twitter">
+          <label class="field-label">X(Twitter)のID（先頭の@はあってもなくてもOK）</label>
+          <input type="text" id="twitterId" placeholder="例: 9999_kirinuki">
+          <div class="row" style="margin-top:8px;">
+            <button class="btn" id="fetchTwitterBtn">アイコンを取得する</button>
+            <span id="twitterStatus" style="font-size:12px;color:var(--text-dim);"></span>
+          </div>
+        </div>
+
+        <div class="tab-pane" id="pane-upload">
+          <div class="dropzone" id="dropzone">
+            画像をドラッグ＆ドロップ<br>またはクリックしてファイルを選ぶ
+            <input type="file" id="fileInput" accept="image/*">
+          </div>
+        </div>
+        <p style="font-size:11.5px;color:var(--text-dim);margin:10px 0 0;">「X(Twitter)アイコンを取得」か「画像をアップロード」のどちらか一方を使えばOKです。名前を入れなければ、丸くくり抜いたアイコンだけの画像として保存できます。</p>
+      </div>
+
+      <!-- アイコン調整 -->
+      <div class="card">
+        <h2>② アイコンの見た目を整える</h2>
+        <div class="row">
+          <label class="field-label" style="width:70px;margin-bottom:0;">拡大縮小</label>
+          <input type="range" id="zoomRange" min="50" max="300" value="100">
+          <span class="range-val" id="zoomVal">100%</span>
+        </div>
+        <div class="row">
+          <label class="field-label" style="width:70px;margin-bottom:0;">左右位置</label>
+          <input type="range" id="panXRange" min="-250" max="250" value="0">
+          <span class="range-val" id="panXVal">0</span>
+          <button type="button" class="btn small" id="panXReset" title="中央（0）に戻す">リセット</button>
+        </div>
+        <div class="row">
+          <label class="field-label" style="width:70px;margin-bottom:0;">上下位置</label>
+          <input type="range" id="panYRange" min="-250" max="250" value="0">
+          <span class="range-val" id="panYVal">0</span>
+          <button type="button" class="btn small" id="panYReset" title="中央（0）に戻す">リセット</button>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+
+        <div class="toggle-row">
+          <label class="field-label" style="margin-bottom:0;">丸い縁取り線（ふちどり）を付ける</label>
+          <label class="switch">
+            <input type="checkbox" id="borderEnabled" checked>
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
+        <div id="borderOptions" style="margin-top:10px;">
+          <div class="row">
+            <label class="field-label" style="width:70px;margin-bottom:0;">太さ</label>
+            <input type="range" id="borderWidthRange" min="0" max="40" value="10">
+            <span class="range-val" id="borderWidthVal">10px</span>
+          </div>
+          <div class="row">
+            <label class="field-label" style="width:70px;margin-bottom:0;">色</label>
+            <input type="color" id="borderColor" value="#ffffff">
+            <input type="text" class="hex-input" id="borderColorHex" value="#ffffff" maxlength="7" placeholder="#RRGGBB">
+          </div>
+          <div class="row">
+            <div class="swatches" id="borderSwatches"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 名前テキスト -->
+      <div class="card">
+        <h2>③ 名前を入れる（入れなくてもOK）</h2>
+        <input type="text" id="nameInput" placeholder="表示したい名前を入力（空欄なら名前なしのアイコンになります）">
+
+        <div style="margin-top:12px;">
+          <label class="field-label">文字の色</label>
+          <div class="row">
+            <input type="color" id="textColor" value="#ffffff">
+            <input type="text" class="hex-input" id="textColorHex" value="#ffffff" maxlength="7" placeholder="#RRGGBB">
+          </div>
+          <div class="row">
+            <div class="swatches" id="textSwatches"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="field-label">文字の縁取りの太さ（0〜10px、0で縁取りなし）</label>
+          <div class="row">
+            <input type="range" id="strokeWidthRange" min="0" max="10" value="3">
+            <span class="range-val" id="strokeWidthVal">3px</span>
+          </div>
+        </div>
+        <div>
+          <label class="field-label">縁取りの色</label>
+          <div class="row">
+            <input type="color" id="strokeColor" value="#000000">
+            <input type="text" class="hex-input" id="strokeColorHex" value="#000000" maxlength="7" placeholder="#RRGGBB">
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="field-label">名前の位置調整（アイコンの大きさや枠は変わりません。名前の文字だけが動きます）</label>
+          <div class="row">
+            <label class="field-label" style="width:70px;margin-bottom:0;">左右</label>
+            <input type="range" id="textOffsetXRange" min="-150" max="150" value="0">
+            <span class="range-val" id="textOffsetXVal">0</span>
+            <button type="button" class="btn small" id="textOffsetXReset" title="中央（0）に戻す">リセット</button>
+          </div>
+          <div class="row">
+            <label class="field-label" style="width:70px;margin-bottom:0;">上へ</label>
+            <input type="range" id="textOffsetYRange" min="0" max="950" value="0">
+            <span class="range-val" id="textOffsetYVal">0</span>
+            <button type="button" class="btn small" id="textOffsetYReset" title="標準位置（0）に戻す">リセット</button>
+          </div>
+          <p style="font-size:11.5px;color:var(--text-dim);margin:6px 0 0;">「上へ」は0が標準位置（アイコンのすぐ下）です。右に動かすほど名前がアイコンの上の方へ移動します（下方向にはこれ以上動きません）。</p>
+        </div>
+      </div>
+
+      <!-- フォント -->
+      <div class="card">
+        <h2>④ 文字のフォント（書体）を選ぶ</h2>
+        <div class="row">
+          <select id="fontSelect">
+            <option value="'Meiryo','メイリオ',sans-serif">メイリオ</option>
+            <option value="'Yu Gothic','游ゴシック',sans-serif" selected>游ゴシック</option>
+            <option value="'Yu Mincho','游明朝',serif">游明朝</option>
+            <option value="'Noto Sans JP',sans-serif">Noto Sans JP</option>
+            <option value="'Shippori Mincho',serif">しっぽり明朝</option>
+            <option value="'MS Gothic',sans-serif">MSゴシック</option>
+          </select>
+          <button class="btn small" id="loadLocalFontsBtn" title="このパソコンにインストールされているフォントを読み込みます（クリックすると許可を確認するポップアップが表示されます）">＋ PC内のフォントを読み込む</button>
+        </div>
+        <p style="font-size:11.5px;color:var(--text-dim);margin:8px 0 0;">上のリストにない書体を使いたい場合は「＋ PC内のフォントを読み込む」を押してください。パソコンにインストール済みのフォントが選べるようになります（初回のみ許可の確認が表示されます）。</p>
+        <div class="row" id="manualFontRow" style="display:none;margin-top:8px;">
+          <input type="text" id="manualFontInput" placeholder="お使いのブラウザは非対応のため、フォント名を直接入力してください（例: HGP創英角ポップ体）">
+        </div>
+      </div>
+
+    </section>
+
+    <section class="preview">
+      <div class="canvas-wrap checkerboard">
+        <canvas id="canvas"></canvas>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="downloadBtn">画像を保存する（PNG）</button>
+        <button class="btn secondary" id="copyBtn">画像をコピーする</button>
+      </div>
+      <p style="font-size:11.5px;color:var(--text-dim);margin:0;text-align:center;">「コピーする」は動画編集ソフト（Premiere Proなど）にそのままCtrl+Vで貼り付けたいときに便利です。</p>
+      <p id="status"></p>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ------------------------------------------------------------
+  // 状態
+  // ------------------------------------------------------------
+  const state = {
+    img: null,          // HTMLImageElement | null
+    imgTainted: false,  // true: セキュリティ制限によりPNG保存/コピーができない可能性がある画像
+    zoom: 1.0,
+    panX: 0,
+    panY: 0,
+    borderEnabled: true,
+    borderWidth: 10,
+    borderColor: "#ffffff",
+    name: "",
+    textColor: "#ffffff",
+    strokeWidth: 3,
+    strokeColor: "#000000",
+    textOffsetX: 0,   // 左右位置（±）
+    textOffsetY: 0,   // 上下位置（0=標準位置、大きいほど上へ移動。下方向へは動かない）
+    fontFamily: "'Yu Gothic','游ゴシック',sans-serif",
+  };
+
+  const ICON_D = 800;       // 円の直径（内部解像度）
+  const SIDE_MARGIN = 180;  // 円の左右の余白（左右の位置微調整の可動域を含む）
+  const TOP_EXTRA = 260;    // 円の上側の余白（上方向の位置微調整でアイコンの上まで動けるように確保）
+  const BOTTOM_MARGIN = 80; // 円の下側の余白
+  const CANVAS_W = ICON_D + SIDE_MARGIN * 2;
+  const CANVAS_H = TOP_EXTRA + ICON_D + BOTTOM_MARGIN + 170; // 下部に名前テキスト表示分の余白を確保
+  const CIRCLE_CX = CANVAS_W / 2;
+  const CIRCLE_CY = TOP_EXTRA + ICON_D / 2;
+
+  // ------------------------------------------------------------
+  // DOM取得
+  // ------------------------------------------------------------
+  const $ = (id) => document.getElementById(id);
+
+  const canvas = $("canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: false });
+  const statusEl = $("status");
+
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const twitterId = $("twitterId");
+  const fetchTwitterBtn = $("fetchTwitterBtn");
+  const twitterStatus = $("twitterStatus");
+  const dropzone = $("dropzone");
+  const fileInput = $("fileInput");
+
+  const zoomRange = $("zoomRange"), zoomVal = $("zoomVal");
+  const panXRange = $("panXRange"), panXVal = $("panXVal");
+  const panYRange = $("panYRange"), panYVal = $("panYVal");
+  const panXReset = $("panXReset"), panYReset = $("panYReset");
+
+  const borderEnabledEl = $("borderEnabled");
+  const borderOptions = $("borderOptions");
+  const borderWidthRange = $("borderWidthRange"), borderWidthVal = $("borderWidthVal");
+  const borderColorEl = $("borderColor");
+  const borderColorHexEl = $("borderColorHex");
+  const borderSwatches = $("borderSwatches");
+
+  const nameInput = $("nameInput");
+  const textColorEl = $("textColor");
+  const textColorHexEl = $("textColorHex");
+  const textSwatches = $("textSwatches");
+  const strokeWidthRange = $("strokeWidthRange"), strokeWidthVal = $("strokeWidthVal");
+  const strokeColorEl = $("strokeColor");
+  const strokeColorHexEl = $("strokeColorHex");
+  const textOffsetXRange = $("textOffsetXRange"), textOffsetXVal = $("textOffsetXVal");
+  const textOffsetYRange = $("textOffsetYRange"), textOffsetYVal = $("textOffsetYVal");
+  const textOffsetXReset = $("textOffsetXReset"), textOffsetYReset = $("textOffsetYReset");
+
+  const fontSelect = $("fontSelect");
+  const loadLocalFontsBtn = $("loadLocalFontsBtn");
+  const manualFontRow = $("manualFontRow");
+  const manualFontInput = $("manualFontInput");
+
+  const downloadBtn = $("downloadBtn");
+  const copyBtn = $("copyBtn");
+
+  // ------------------------------------------------------------
+  // ステータス表示
+  // ------------------------------------------------------------
+  function setStatus(msg, type) {
+    statusEl.textContent = msg || "";
+    statusEl.className = type ? type : "";
+  }
+
+  // ------------------------------------------------------------
+  // タブ切り替え（Twitter ID / アップロード = 排他）
+  // ------------------------------------------------------------
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      $("pane-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ------------------------------------------------------------
+  // 画像読み込み: X(Twitter) ID → unavatar.io
+  // ------------------------------------------------------------
+  function loadImageElement(src, crossOrigin) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      if (crossOrigin) img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  // file:// で開いた場合 fetch() はクロスオリジン通信がブロックされ失敗することが
+  // あるため、複数の読み込み方式を順番に試す。
+  //  1) fetch→Blob化→ObjectURL（成功すればcanvasは確実にtaintedにならない）
+  //  2) <img crossorigin="anonymous"> 直接読み込み
+  //  3) crossorigin指定なしでの読み込み（表示はできるがPNG保存等が失敗する可能性あり）
+  async function robustLoadImage(url) {
+    try {
+      const res = await fetch(url, { mode: "cors", cache: "no-store" });
+      if (res.ok) {
+        const blob = await res.blob();
+        const img = await loadImageElement(URL.createObjectURL(blob), false);
+        return { img, tainted: false };
+      }
+    } catch (e) { /* 次の方式へ */ }
+
+    try {
+      const img = await loadImageElement(url, true);
+      return { img, tainted: false };
+    } catch (e) { /* 次の方式へ */ }
+
+    const img = await loadImageElement(url, false);
+    return { img, tainted: true };
+  }
+
+  async function loadFromTwitter(id) {
+    const clean = id.trim().replace(/^@/, "");
+    if (!clean) {
+      setStatus("X(Twitter) IDを入力してください。", "error");
+      return;
+    }
+    twitterStatus.textContent = "取得中...";
+    setStatus("アイコンを取得しています...", "");
+    // キャッシュ回避のためタイムスタンプを付与
+    const url = "https://unavatar.io/x/" + encodeURIComponent(clean) + "?t=" + Date.now();
+    try {
+      const { img, tainted } = await robustLoadImage(url);
+      state.img = img;
+      state.imgTainted = tainted;
+      twitterStatus.textContent = "取得成功";
+      if (tainted) {
+        setStatus("アイコンを表示しましたが、この環境の制限によりPNG保存・コピーができない場合があります。失敗する場合は画像アップロードをお試しください。", "error");
+      } else {
+        setStatus("アイコンを取得しました。", "ok");
+      }
+      draw();
+    } catch (e) {
+      twitterStatus.textContent = "取得失敗";
+      setStatus("アイコン取得に失敗しました。IDを確認するか、画像アップロードをお試しください。", "error");
+      console.error(e);
+    }
+  }
+
+  fetchTwitterBtn.addEventListener("click", () => loadFromTwitter(twitterId.value));
+  twitterId.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loadFromTwitter(twitterId.value);
+  });
+
+  // ------------------------------------------------------------
+  // 画像読み込み: ローカルアップロード（ドラッグ＆ドロップ対応）
+  // ------------------------------------------------------------
+  function handleFile(file) {
+    if (!file || !file.type.startsWith("image/")) {
+      setStatus("画像ファイルを選択してください。", "error");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const img = await loadImageElement(reader.result, false);
+        state.img = img;
+        state.imgTainted = false;
+        setStatus("画像を読み込みました。", "ok");
+        draw();
+      } catch (e) {
+        setStatus("画像の読み込みに失敗しました。", "error");
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  dropzone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", (e) => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+  ["dragenter", "dragover"].forEach((ev) =>
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault();
+      dropzone.classList.add("drag");
+    })
+  );
+  ["dragleave", "drop"].forEach((ev) =>
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("drag");
+    })
+  );
+  dropzone.addEventListener("drop", (e) => {
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  // ------------------------------------------------------------
+  // アイコン調整スライダー
+  // ------------------------------------------------------------
+  zoomRange.addEventListener("input", () => {
+    state.zoom = Number(zoomRange.value) / 100;
+    zoomVal.textContent = zoomRange.value + "%";
+    draw();
+  });
+  panXRange.addEventListener("input", () => {
+    state.panX = Number(panXRange.value);
+    panXVal.textContent = panXRange.value;
+    draw();
+  });
+  panYRange.addEventListener("input", () => {
+    state.panY = Number(panYRange.value);
+    panYVal.textContent = panYRange.value;
+    draw();
+  });
+  panXReset.addEventListener("click", () => {
+    panXRange.value = 0;
+    state.panX = 0;
+    panXVal.textContent = "0";
+    draw();
+  });
+  panYReset.addEventListener("click", () => {
+    panYRange.value = 0;
+    state.panY = 0;
+    panYVal.textContent = "0";
+    draw();
+  });
+
+  // ------------------------------------------------------------
+  // ボーダー
+  // ------------------------------------------------------------
+  borderEnabledEl.addEventListener("change", () => {
+    state.borderEnabled = borderEnabledEl.checked;
+    borderOptions.style.opacity = state.borderEnabled ? "1" : ".4";
+    borderOptions.style.pointerEvents = state.borderEnabled ? "auto" : "none";
+    draw();
+  });
+  borderWidthRange.addEventListener("input", () => {
+    state.borderWidth = Number(borderWidthRange.value);
+    borderWidthVal.textContent = state.borderWidth + "px";
+    draw();
+  });
+  borderColorEl.addEventListener("input", () => {
+    state.borderColor = borderColorEl.value;
+    borderColorHexEl.value = borderColorEl.value;
+    highlightSwatch(borderSwatches, state.borderColor);
+    draw();
+  });
+
+  const PRESET_COLORS = [
+    { name: "白", hex: "#ffffff" },
+    { name: "黒", hex: "#000000" },
+    { name: "赤", hex: "#ff3b3b" },
+    { name: "ピンク", hex: "#ff6fa5" },
+    { name: "黄色", hex: "#ffe135" },
+    { name: "緑", hex: "#22c55e" },
+    { name: "水色", hex: "#38bdf8" },
+    { name: "青", hex: "#3b82f6" },
+    { name: "紫", hex: "#a855f7" },
+  ];
+
+  function buildSwatches(container, onPick) {
+    PRESET_COLORS.forEach((c) => {
+      const b = document.createElement("button");
+      b.className = "swatch";
+      b.style.background = c.hex;
+      b.title = c.name;
+      b.type = "button";
+      b.addEventListener("click", () => onPick(c.hex));
+      container.appendChild(b);
+    });
+  }
+  function highlightSwatch(container, hex) {
+    [...container.children].forEach((b) => {
+      b.classList.toggle("selected", b.style.background === hexToRgbCss(hex));
+    });
+  }
+  function hexToRgbCss(hex) {
+    // ブラウザは style.background を rgb(...) 形式で保持するので変換して比較
+    const d = document.createElement("div");
+    d.style.background = hex;
+    document.body.appendChild(d);
+    const v = getComputedStyle(d).backgroundColor;
+    document.body.removeChild(d);
+    return v;
+  }
+
+  buildSwatches(borderSwatches, (hex) => {
+    borderColorEl.value = hex;
+    borderColorHexEl.value = hex;
+    state.borderColor = hex;
+    highlightSwatch(borderSwatches, hex);
+    draw();
+  });
+  buildSwatches(textSwatches, (hex) => {
+    textColorEl.value = hex;
+    textColorHexEl.value = hex;
+    state.textColor = hex;
+    highlightSwatch(textSwatches, hex);
+    draw();
+  });
+
+  // カラーコード（HEX）直接入力欄。type="color"のネイティブUIがRGBタブ表示に
+  // なる環境でも、#RRGGBBの直接入力・貼り付けができるようにする。
+  function bindHexInput(hexEl, colorEl, applyFn) {
+    hexEl.addEventListener("input", () => {
+      let v = hexEl.value.trim();
+      if (v && !v.startsWith("#")) v = "#" + v;
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        colorEl.value = v;
+        applyFn(v);
+      }
+    });
+    hexEl.addEventListener("blur", () => {
+      hexEl.value = colorEl.value; // 不正な入力は現在値に戻す
+    });
+  }
+  bindHexInput(borderColorHexEl, borderColorEl, (v) => {
+    state.borderColor = v;
+    highlightSwatch(borderSwatches, v);
+    draw();
+  });
+  bindHexInput(textColorHexEl, textColorEl, (v) => {
+    state.textColor = v;
+    highlightSwatch(textSwatches, v);
+    draw();
+  });
+  bindHexInput(strokeColorHexEl, strokeColorEl, (v) => {
+    state.strokeColor = v;
+    draw();
+  });
+
+  // ------------------------------------------------------------
+  // 名前テキスト
+  // ------------------------------------------------------------
+  nameInput.addEventListener("input", () => {
+    state.name = nameInput.value;
+    draw();
+  });
+  textColorEl.addEventListener("input", () => {
+    state.textColor = textColorEl.value;
+    textColorHexEl.value = textColorEl.value;
+    highlightSwatch(textSwatches, state.textColor);
+    draw();
+  });
+  strokeWidthRange.addEventListener("input", () => {
+    state.strokeWidth = Number(strokeWidthRange.value);
+    strokeWidthVal.textContent = state.strokeWidth + "px";
+    draw();
+  });
+  strokeColorEl.addEventListener("input", () => {
+    state.strokeColor = strokeColorEl.value;
+    strokeColorHexEl.value = strokeColorEl.value;
+    draw();
+  });
+
+  textOffsetXRange.addEventListener("input", () => {
+    state.textOffsetX = Number(textOffsetXRange.value);
+    textOffsetXVal.textContent = state.textOffsetX;
+    draw();
+  });
+  textOffsetYRange.addEventListener("input", () => {
+    state.textOffsetY = Number(textOffsetYRange.value);
+    textOffsetYVal.textContent = state.textOffsetY;
+    draw();
+  });
+  textOffsetXReset.addEventListener("click", () => {
+    textOffsetXRange.value = 0;
+    state.textOffsetX = 0;
+    textOffsetXVal.textContent = "0";
+    draw();
+  });
+  textOffsetYReset.addEventListener("click", () => {
+    textOffsetYRange.value = 0;
+    state.textOffsetY = 0;
+    textOffsetYVal.textContent = "0";
+    draw();
+  });
+
+  // ------------------------------------------------------------
+  // フォント選択
+  // ------------------------------------------------------------
+  fontSelect.addEventListener("change", () => {
+    state.fontFamily = fontSelect.value;
+    draw();
+  });
+  manualFontInput.addEventListener("input", () => {
+    if (manualFontInput.value.trim()) {
+      state.fontFamily = '"' + manualFontInput.value.trim() + '",sans-serif';
+      draw();
+    }
+  });
+
+  loadLocalFontsBtn.addEventListener("click", async () => {
+    if (!("queryLocalFonts" in window)) {
+      manualFontRow.style.display = "flex";
+      loadLocalFontsBtn.disabled = true;
+      loadLocalFontsBtn.textContent = "非対応（左に手入力）";
+      setStatus("このブラウザは PC内フォントの読み込みに非対応です。フォント名を直接入力してください。", "error");
+      return;
+    }
+    try {
+      const fonts = await window.queryLocalFonts(); // ここで初めて許可ダイアログが出る
+      const families = [...new Set(fonts.map((f) => f.family))].sort((a, b) => a.localeCompare(b, "ja"));
+      families.forEach((fam) => {
+        const opt = document.createElement("option");
+        opt.value = '"' + fam + '",sans-serif';
+        opt.textContent = fam + "（PC内）";
+        fontSelect.appendChild(opt);
+      });
+      loadLocalFontsBtn.textContent = "読み込み完了（" + families.length + "件）";
+      loadLocalFontsBtn.disabled = true;
+      setStatus("PC内のフォントを " + families.length + " 件読み込みました。", "ok");
+    } catch (e) {
+      setStatus("フォントへのアクセスが許可されませんでした。", "error");
+    }
+  });
+
+  // ------------------------------------------------------------
+  // 描画
+  // ------------------------------------------------------------
+  function drawAvatarCircle(cx, cy, radius) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.clip();
+
+    if (state.img) {
+      const img = state.img;
+      const baseScale = Math.max((radius * 2) / img.width, (radius * 2) / img.height) * state.zoom;
+      const dw = img.width * baseScale;
+      const dh = img.height * baseScale;
+      const dx = cx - dw / 2 + state.panX;
+      const dy = cy - dh / 2 + state.panY;
+      ctx.drawImage(img, dx, dy, dw, dh);
+    } else {
+      ctx.fillStyle = "#5b6172";
+      ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.font = Math.round(radius * 1.1) + "px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("\u{1F464}", cx, cy + radius * 0.06);
+    }
+    ctx.restore();
+
+    if (state.borderEnabled && state.borderWidth > 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.lineWidth = state.borderWidth;
+      ctx.strokeStyle = state.borderColor;
+      ctx.stroke();
+    }
+  }
+
+  function drawText(x, y, fontSize, align) {
+    if (!state.name) return;
+    ctx.font = "bold " + fontSize + "px " + state.fontFamily;
+    ctx.textAlign = align || "center";
+    ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    ctx.miterLimit = 2;
+    if (state.strokeWidth > 0) {
+      ctx.lineWidth = state.strokeWidth * 2;
+      ctx.strokeStyle = state.strokeColor;
+      ctx.strokeText(state.name, x, y);
+    }
+    ctx.fillStyle = state.textColor;
+    ctx.fillText(state.name, x, y);
+  }
+
+  function draw() {
+    const radius = ICON_D / 2;
+    const fontSize = Math.round(ICON_D * 0.13);
+
+    // キャンバスサイズは常に固定。位置微調整を動かしてもアイコンや枠のサイズは変わらず、
+    // 名前テキストだけが可動域内でスライドする。
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawAvatarCircle(CIRCLE_CX, CIRCLE_CY, radius);
+
+    if (!state.name) return;
+
+    // 上下スライダーは 0=標準位置（アイコンのすぐ下）、値が大きいほど上へ移動する
+    const baseTextY = CIRCLE_CY + radius + fontSize * 0.8;
+    const textX = CIRCLE_CX + state.textOffsetX;
+    const textY = baseTextY - state.textOffsetY;
+    drawText(textX, textY, fontSize, "center");
+  }
+
+  // ------------------------------------------------------------
+  // 出力: PNGダウンロード / クリップボードコピー
+  // ------------------------------------------------------------
+  const TAINT_MSG = "この環境のセキュリティ制限によりPNGの生成ができません。画像アップロードでの利用をお試しください。";
+
+  downloadBtn.addEventListener("click", () => {
+    try {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          setStatus(state.imgTainted ? TAINT_MSG : "PNGの生成に失敗しました。", "error");
+          return;
+        }
+        const a = document.createElement("a");
+        const stamp = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14);
+        a.href = URL.createObjectURL(blob);
+        a.download = "icon_" + stamp + ".png";
+        a.click();
+        setStatus("PNGをダウンロードしました。", "ok");
+      }, "image/png");
+    } catch (e) {
+      setStatus(TAINT_MSG, "error");
+    }
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    try {
+      if (!navigator.clipboard || !window.ClipboardItem) {
+        throw new Error("clipboard API 非対応");
+      }
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error(state.imgTainted ? "tainted" : "blob生成失敗");
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      setStatus("クリップボードに画像をコピーしました。Ctrl+Vで貼り付けできます。", "ok");
+    } catch (e) {
+      setStatus(state.imgTainted ? TAINT_MSG : "クリップボードへのコピーに失敗しました（このブラウザは非対応の可能性があります）。PNGダウンロードをお使いください。", "error");
+      console.error(e);
+    }
+  });
+
+  // ------------------------------------------------------------
+  // 初期化
+  // ------------------------------------------------------------
+  borderOptions.style.opacity = "1";
+  draw();
+})();
+</script>
+</body>
+</html>
